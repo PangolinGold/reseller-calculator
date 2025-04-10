@@ -6,18 +6,31 @@
     <title>eBay Calculator: Profit or Price</title>
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-        input, button, select { margin: 5px 0; width: 100%; padding: 8px; }
+        input, button { margin: 5px 0; width: 100%; padding: 8px; }
         label { font-weight: bold; margin-top: 10px; display: block; }
+        .toggle-group { display: flex; gap: 10px; margin-bottom: 15px; }
+        .toggle-group button {
+            flex: 1;
+            padding: 10px;
+            cursor: pointer;
+            background-color: #eee;
+            border: 1px solid #ccc;
+            font-weight: bold;
+        }
+        .toggle-group button.active {
+            background-color: #007BFF;
+            color: white;
+            border-color: #0056b3;
+        }
     </style>
 </head>
 <body>
     <h2>eBay Profit Calculator</h2>
 
-    <label for="modeSelect">Select Mode</label>
-    <select id="modeSelect" onchange="toggleMode()">
-        <option value="price">Required Sale Price for Target Profit</option>
-        <option value="profit">Profit Realized from Sale Price</option>
-    </select>
+    <div class="toggle-group">
+        <button id="btnPrice" class="active" onclick="setMode('price')">Calculate Price</button>
+        <button id="btnProfit" onclick="setMode('profit')">Calculate Profit</button>
+    </div>
 
     <label for="itemCost">Item Cost ($)</label>
     <input type="number" id="itemCost" step="0.01">
@@ -55,15 +68,18 @@
     <p id="result"><strong>Result:</strong></p>
 
     <script>
-    function toggleMode() {
-        const mode = document.getElementById("modeSelect").value;
+    let currentMode = 'price';
+
+    function setMode(mode) {
+        currentMode = mode;
+        document.getElementById("btnPrice").classList.toggle("active", mode === "price");
+        document.getElementById("btnProfit").classList.toggle("active", mode === "profit");
         document.getElementById("targetProfitDiv").style.display = mode === "price" ? "block" : "none";
         document.getElementById("actualPriceDiv").style.display = mode === "profit" ? "block" : "none";
         document.getElementById("result").textContent = "Result:";
     }
 
     function calculate() {
-        const mode = document.getElementById("modeSelect").value;
         const itemCost = parseFloat(document.getElementById("itemCost").value);
         const shippingCharged = parseFloat(document.getElementById("shippingCharged").value);
         const shippingCost = parseFloat(document.getElementById("shippingCost").value);
@@ -72,7 +88,7 @@
         const adFeeRate = parseFloat(document.getElementById("adFeeRate").value) / 100;
         const taxRate = parseFloat(document.getElementById("taxRate").value) / 100;
 
-        if (mode === "price") {
+        if (currentMode === "price") {
             const targetProfit = parseFloat(document.getElementById("targetProfit").value);
             let low = 0;
             let high = 100000;
