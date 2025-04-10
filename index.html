@@ -1,1 +1,152 @@
-<!DOCTYPE html><html lang='en'><head><meta charset='UTF-8'><meta name='viewport' content='width=device-width, initial-scale=1.0'><title>eBay Price Calculator</title></head><body><p>This is the updated eBay calculator. Please replace with full HTML if needed.</p></body></html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>eBay Price Calculator</title>
+  <style>
+    body {
+      font-family: sans-serif;
+      padding: 1rem;
+      background: #f7f7f7;
+      max-width: 500px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 1rem;
+    }
+    input {
+      width: 100%;
+      padding: 0.5rem;
+      font-size: 1rem;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      width: 100%;
+      font-size: 1rem;
+    }
+    .result {
+      margin-top: 1rem;
+      font-size: 1.1rem;
+      font-weight: bold;
+      white-space: pre-line;
+    }
+    .toggle {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 1rem;
+    }
+    .toggle button {
+      width: 49%;
+    }
+    .section {
+      display: none;
+    }
+    .section.active {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h2>eBay Price Calculator</h2>
+
+  <div class="toggle">
+    <button onclick="showSection('calculatePrice')">Find Sale Price</button>
+    <button onclick="showSection('calculateProfit')">Estimate Profit</button>
+  </div>
+
+  <div id="calculatePrice" class="section active">
+    <label>Item Cost ($): <input type="number" id="itemCost" value="6" /></label>
+    <label>Target Net Profit ($): <input type="number" id="netProfit" value="18" /></label>
+    <label>Shipping Charged to Buyer ($): <input type="number" id="shippingCharged" value="10" /></label>
+    <label>Your Shipping Cost ($): <input type="number" id="shippingCost" value="13" /></label>
+    <label>Per-Item Fee ($): <input type="number" id="perItemFee" value="0.3" /></label>
+    <label>eBay Selling Fee (%): <input type="number" id="sellingFeePercent" value="13.5" /></label>
+    <label>Promotion Rate (%): <input type="number" id="promotionPercent" value="2" /></label>
+    <label>Sales Tax Rate (%): <input type="number" id="taxPercent" value="8" /></label>
+    <button onclick="calculateBreakEven()">Calculate Sale Price</button>
+    <div class="result" id="result"></div>
+  </div>
+
+  <div id="calculateProfit" class="section">
+    <label>Selling Price ($): <input type="number" id="salePrice" value="32.47" /></label>
+    <label>Item Cost ($): <input type="number" id="itemCost2" value="6" /></label>
+    <label>Shipping Charged to Buyer ($): <input type="number" id="shippingCharged2" value="10" /></label>
+    <label>Your Shipping Cost ($): <input type="number" id="shippingCost2" value="13" /></label>
+    <label>Per-Item Fee ($): <input type="number" id="perItemFee2" value="0.3" /></label>
+    <label>eBay Selling Fee (%): <input type="number" id="sellingFeePercent2" value="13.5" /></label>
+    <label>Promotion Rate (%): <input type="number" id="promotionPercent2" value="2" /></label>
+    <label>Sales Tax Rate (%): <input type="number" id="taxPercent2" value="8" /></label>
+    <button onclick="calculateProfit()">Calculate Profit</button>
+    <div class="result" id="profitResult"></div>
+  </div>
+
+  <script>
+    function showSection(id) {
+      document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function calculateBreakEven() {
+      const itemCost = parseFloat(document.getElementById("itemCost").value);
+      const netProfit = parseFloat(document.getElementById("netProfit").value);
+      const shippingCharged = parseFloat(document.getElementById("shippingCharged").value);
+      const shippingCost = parseFloat(document.getElementById("shippingCost").value);
+      const perItemFee = parseFloat(document.getElementById("perItemFee").value);
+      const sellingFeePercent = parseFloat(document.getElementById("sellingFeePercent").value);
+      const promotionPercent = parseFloat(document.getElementById("promotionPercent").value);
+      const taxPercent = parseFloat(document.getElementById("taxPercent").value);
+
+      const targetTotal = itemCost + netProfit;
+
+      function totalFees(salePrice) {
+        const taxedAmount = salePrice + shippingCharged;
+        const tax = (taxPercent / 100) * taxedAmount;
+        const feeBase = salePrice + shippingCharged + tax;
+        const sellingFee = (sellingFeePercent / 100) * feeBase;
+        const promoFee = (promotionPercent / 100) * feeBase;
+        return sellingFee + promoFee + perItemFee;
+      }
+
+      function findSalePrice() {
+        let guess = 1;
+        while (guess < 1000) {
+          const fees = totalFees(guess);
+          const received = guess + shippingCharged - fees - shippingCost;
+          if (received >= targetTotal) return guess.toFixed(2);
+          guess += 0.01;
+        }
+        return "Not found within range";
+      }
+
+      const result = findSalePrice();
+      document.getElementById("result").innerText = `Required Sale Price: $${result}`;
+    }
+
+    function calculateProfit() {
+      const salePrice = parseFloat(document.getElementById("salePrice").value);
+      const itemCost = parseFloat(document.getElementById("itemCost2").value);
+      const shippingCharged = parseFloat(document.getElementById("shippingCharged2").value);
+      const shippingCost = parseFloat(document.getElementById("shippingCost2").value);
+      const perItemFee = parseFloat(document.getElementById("perItemFee2").value);
+      const sellingFeePercent = parseFloat(document.getElementById("sellingFeePercent2").value);
+      const promotionPercent = parseFloat(document.getElementById("promotionPercent2").value);
+      const taxPercent = parseFloat(document.getElementById("taxPercent2").value);
+
+      const taxedAmount = salePrice + shippingCharged;
+      const tax = (taxPercent / 100) * taxedAmount;
+      const feeBase = salePrice + shippingCharged + tax;
+      const sellingFee = (sellingFeePercent / 100) * feeBase;
+      const promoFee = (promotionPercent / 100) * feeBase;
+      const totalFees = sellingFee + promoFee + perItemFee;
+
+      const received = salePrice + shippingCharged - totalFees - shippingCost;
+      const profit = received - itemCost;
+
+      document.getElementById("profitResult").innerText = `Estimated Profit: $${profit.toFixed(2)}\n(Fees: $${totalFees.toFixed(2)}, Net Received: $${received.toFixed(2)})`;
+    }
+  </script>
+</body>
+</html>
