@@ -3,20 +3,34 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>eBay Profit Calculator</title>
+    <title>eBay Calculator: Profit or Price</title>
     <style>
         body { font-family: sans-serif; padding: 20px; max-width: 600px; margin: auto; }
-        input, button { margin: 5px 0; width: 100%; padding: 8px; }
+        input, button, select { margin: 5px 0; width: 100%; padding: 8px; }
         label { font-weight: bold; margin-top: 10px; display: block; }
     </style>
 </head>
 <body>
     <h2>eBay Profit Calculator</h2>
+
+    <label for="modeSelect">Select Mode</label>
+    <select id="modeSelect" onchange="toggleMode()">
+        <option value="price">Required Sale Price for Target Profit</option>
+        <option value="profit">Profit Realized from Sale Price</option>
+    </select>
+
     <label for="itemCost">Item Cost ($)</label>
     <input type="number" id="itemCost" step="0.01">
 
-    <label for="targetProfit">Target Net Profit ($)</label>
-    <input type="number" id="targetProfit" step="0.01">
+    <div id="targetProfitDiv">
+        <label for="targetProfit">Target Net Profit ($)</label>
+        <input type="number" id="targetProfit" step="0.01">
+    </div>
+
+    <div id="actualPriceDiv" style="display: none;">
+        <label for="actualPrice">Actual Sale Price ($)</label>
+        <input type="number" id="actualPrice" step="0.01">
+    </div>
 
     <label for="shippingCharged">Shipping Charged to Buyer ($)</label>
     <input type="number" id="shippingCharged" step="0.01">
@@ -36,14 +50,21 @@
     <label for="taxRate">Sales Tax Rate (%)</label>
     <input type="number" id="taxRate" step="0.1" value="8">
 
-    <button onclick="calculateRequiredSalePrice()">Calculate Required Sale Price</button>
+    <button onclick="calculate()">Calculate</button>
 
-    <p id="requiredPriceResult"><strong>Required Sale Price:</strong></p>
+    <p id="result"><strong>Result:</strong></p>
 
     <script>
-    function calculateRequiredSalePrice() {
+    function toggleMode() {
+        const mode = document.getElementById("modeSelect").value;
+        document.getElementById("targetProfitDiv").style.display = mode === "price" ? "block" : "none";
+        document.getElementById("actualPriceDiv").style.display = mode === "profit" ? "block" : "none";
+        document.getElementById("result").textContent = "Result:";
+    }
+
+    function calculate() {
+        const mode = document.getElementById("modeSelect").value;
         const itemCost = parseFloat(document.getElementById("itemCost").value);
-        const targetProfit = parseFloat(document.getElementById("targetProfit").value);
         const shippingCharged = parseFloat(document.getElementById("shippingCharged").value);
         const shippingCost = parseFloat(document.getElementById("shippingCost").value);
         const perItemFee = parseFloat(document.getElementById("perItemFee").value);
@@ -51,32 +72,32 @@
         const adFeeRate = parseFloat(document.getElementById("adFeeRate").value) / 100;
         const taxRate = parseFloat(document.getElementById("taxRate").value) / 100;
 
-        let low = 0;
-        let high = 100000;
-        let requiredPrice = -1;
-        let tolerance = 0.01;
-        let attempts = 0;
-
-        while (high - low > tolerance && attempts < 100) {
-            let mid = (low + high) / 2;
-            let tax = mid * taxRate;
-            let fees = mid * sellingFeeRate + mid * adFeeRate + perItemFee;
-            let net = mid - fees - itemCost - shippingCost + shippingCharged - tax;
-
-            if (net > targetProfit) {
-                high = mid;
-            } else {
-                low = mid;
+        if (mode === "price") {
+            const targetProfit = parseFloat(document.getElementById("targetProfit").value);
+            let low = 0;
+            let high = 100000;
+            let tolerance = 0.01;
+            let attempts = 0;
+            while (high - low > tolerance && attempts < 100) {
+                let mid = (low + high) / 2;
+                let tax = mid * taxRate;
+                let fees = mid * sellingFeeRate + mid * adFeeRate + perItemFee;
+                let net = mid - fees - itemCost - shippingCost + shippingCharged - tax;
+                if (net > targetProfit) {
+                    high = mid;
+                } else {
+                    low = mid;
+                }
+                attempts++;
             }
-
-            attempts++;
-        }
-
-        requiredPrice = (low + high) / 2;
-        if (requiredPrice > 0 && requiredPrice < 100000) {
-            document.getElementById("requiredPriceResult").textContent = "Required Sale Price: $" + requiredPrice.toFixed(2);
+            let result = (low + high) / 2;
+            document.getElementById("result").textContent = "Required Sale Price: $" + result.toFixed(2);
         } else {
-            document.getElementById("requiredPriceResult").textContent = "Required Sale Price: $Not found within range";
+            const actualPrice = parseFloat(document.getElementById("actualPrice").value);
+            let tax = actualPrice * taxRate;
+            let fees = actualPrice * sellingFeeRate + actualPrice * adFeeRate + perItemFee;
+            let net = actualPrice - fees - itemCost - shippingCost + shippingCharged - tax;
+            document.getElementById("result").textContent = "Estimated Net Profit: $" + net.toFixed(2);
         }
     }
     </script>
